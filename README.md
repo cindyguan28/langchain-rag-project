@@ -16,7 +16,7 @@ The original tutorial uses a book-based example. In this fork, the project has b
 The goal of this project is to practice the basic RAG workflow:
 
 ```text
-Load documents
+→ Load documents
 → Split documents into chunks
 → Create embeddings
 → Store chunks in Chroma
@@ -31,7 +31,7 @@ Original project:
 
 * <https://github.com/pixegami/langchain-rag-tutorial>
 
-This version contains self-created learning notes and mock troubleshooting documentation. It does not contain proprietary company documentation.
+This version contains self-created learning notes and mock troubleshooting documentation.
 
 ## Project structure
 
@@ -232,8 +232,8 @@ After changing documents or code:
 
 ```bash
 git status
-git add data/aws-guidance/ create_database.py README.md requirements.txt .gitignore
-git commit -m "Update AWS guidance RAG setup"
+git add .
+git commit -m "friendly text"
 git push origin main
 ```
 
