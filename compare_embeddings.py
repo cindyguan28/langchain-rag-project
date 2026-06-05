@@ -1,28 +1,48 @@
-from langchain_openai import OpenAIEmbeddings
-from langchain.evaluation import load_evaluator
-from dotenv import load_dotenv
-import openai
-import os
+import numpy as np
+
+from langchain_huggingface import HuggingFaceEmbeddings
 
 # Load environment variables. Assumes that project contains .env file with API keys
-load_dotenv()
-#---- Set OpenAI API key 
-# Change environment variable name from "OPENAI_API_KEY" to the name given in 
-# your .env file.
-openai.api_key = os.environ['OPENAI_API_KEY']
+#load_dotenv()
+
+def cosine_similarity(vector_a, vector_b):
+    a = np.array(vector_a)
+    b = np.array(vector_b)
+
+    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+
 
 def main():
+    # Use a local Hugging Face embedding model.
+    # No OpenAI account or API key is required.
+    
+    #---- Set OpenAI API key 
+    # Change environment variable name from "OPENAI_API_KEY" to the name given in 
+    # your .env file.
+
+    embedding_function = HuggingFaceEmbeddings(
+        model_name="sentence-transformers/all-MiniLM-L6-v2"
+    )
+
     # Get embedding for a word.
-    embedding_function = OpenAIEmbeddings()
     vector = embedding_function.embed_query("apple")
-    print(f"Vector for 'apple': {vector}")
+
+    print("Vector for 'apple':")
+    print(vector[:10])
     print(f"Vector length: {len(vector)}")
 
-    # Compare vector of two words
-    evaluator = load_evaluator("pairwise_embedding_distance")
-    words = ("apple", "iphone")
-    x = evaluator.evaluate_string_pairs(prediction=words[0], prediction_b=words[1])
-    print(f"Comparing ({words[0]}, {words[1]}): {x}")
+    # Compare vectors of two words.
+    words = ("apple", "pineapple")
+
+    vector_1 = embedding_function.embed_query(words[0])
+    vector_2 = embedding_function.embed_query(words[1])
+
+    similarity = cosine_similarity(vector_1, vector_2)
+    distance = 1 - similarity
+
+    print(f"\nComparing ({words[0]}, {words[1]}):")
+    print(f"Cosine similarity: {similarity:.4f}")
+    print(f"Cosine distance: {distance:.4f}")
 
 
 if __name__ == "__main__":
