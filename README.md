@@ -13,14 +13,15 @@ The original tutorial uses a book-based example. In this fork, the project has b
 * S3 KMS encryption
 * Official AWS / Terraform / LangChain source references
 
-The goal of this project is to practice the basic RAG workflow:
+The goal of this project is to practice a local RAG workflow:
 
 ```text
 → Load documents
 → Split documents into chunks
-→ Create embeddings
+→ Create local embeddings
 → Store chunks in Chroma
-→ Query the vector database
+→ Retrieve relevant context
+→ Generate an answer with a local Ollama model
 ```
 
 ## Note
@@ -106,7 +107,7 @@ pip install -r requirements.txt
 If the `requirements.txt` file is not available yet, install the core dependencies manually:
 
 ```bash
-pip install -U langchain langchain-community langchain-text-splitters langchain-core langchain-chroma chromadb langchain-huggingface sentence-transformers
+pip install -U langchain langchain-community langchain-text-splitters langchain-core langchain-chroma chromadb langchain-huggingface sentence-transformers langchain-ollama
 ```
 
 This project currently uses local Hugging Face embeddings:
@@ -116,6 +117,48 @@ sentence-transformers/all-MiniLM-L6-v2
 ```
 
 Therefore, an OpenAI API key is not required for creating the local Chroma vector database.
+
+## Install Ollama
+
+This project uses Ollama to run a local LLM for answer generation.
+
+Install Ollama from the official website:
+
+```text
+https://ollama.com/download
+```
+
+After installation, check that the CLI works:
+
+```bash
+ollama --version
+```
+
+Pull the local model used by this project:
+
+```bash
+ollama pull llama3.2:3b
+```
+
+Test the model:
+
+```bash
+ollama run llama3.2:3b
+```
+
+Exit the Ollama chat with:
+
+```text
+/bye
+```
+
+The current `query_data.py` uses:
+
+```text
+llama3.2:3b
+```
+
+If you use another Ollama model, update the model name in `query_data.py`.
 
 ## Create the Chroma database
 
@@ -148,11 +191,26 @@ The first run may take longer because the Hugging Face model needs to be downloa
 
 ## Query the database
 
-If `query_data.py` is implemented, you can query the Chroma database with:
+After creating the Chroma database and installing Ollama, query the local RAG system with:
 
 ```bash
 python query_data.py "Why does a Glue crawler fail on KMS encrypted S3 data?"
 ```
+
+You can also retrieve more chunks by passing `--k`:
+
+```bash
+python query_data.py "What is the difference between IAM and Lake Formation permissions?" --k 5
+```
+
+The query script will:
+
+1. Embed the user question with the local Hugging Face embedding model
+2. Search the local Chroma vector database
+3. Retrieve the most relevant chunks
+4. Send the retrieved context to the local Ollama model
+5. Generate an answer based only on the retrieved context
+6. Print the answer and source documents
 
 Example questions for this knowledge base:
 
@@ -164,13 +222,21 @@ Why can a QuickSight user see a dashboard but not load the visuals?
 What should I check if S3 access works but kms:Decrypt fails?
 ```
 
-Depending on the implementation of `query_data.py`, answering with an LLM may still require an API key. However, creating the vector database with local embeddings does not require an OpenAI API key.
+## Local-only setup
+
+This project can run locally without an OpenAI API key:
+
+* Embeddings: local Hugging Face model
+* Vector database: local Chroma database
+* LLM answer generation: local Ollama model
+
+This makes the project suitable for learning and experimentation without sending prompts to an external LLM provider.
 
 ## OpenAI API key
 
-This project currently uses local Hugging Face embeddings for database creation.
+This project currently does not require an OpenAI API key.
 
-If you later switch to OpenAI embeddings or use OpenAI chat models, create a `.env` file:
+If you later switch to OpenAI embeddings or OpenAI chat models, create a `.env` file:
 
 ```text
 OPENAI_API_KEY=your_api_key_here
@@ -238,6 +304,58 @@ git push origin main
 ```
 
 Before committing, always check that `.venv/`, `.env`, and `chroma/` are not included.
+
+A safer add command is:
+
+```bash
+git add README.md requirements.txt create_database.py query_data.py data/aws-guidance/ .gitignore
+```
+
+## Troubleshooting
+
+### Ollama command not found
+
+If this happens:
+
+```text
+zsh: command not found: ollama
+```
+
+Install Ollama from:
+
+```text
+https://ollama.com/download
+```
+
+Then restart the terminal and run:
+
+```bash
+ollama --version
+```
+
+### Ollama model not found
+
+If the query script cannot find the model, pull it first:
+
+```bash
+ollama pull llama3.2:3b
+```
+
+### Chroma database not found
+
+If `query_data.py` cannot find the local vector database, create it first:
+
+```bash
+python create_database.py
+```
+
+### `.venv` appears in Git changes
+
+Make sure `.venv/` is listed in `.gitignore`, then run:
+
+```bash
+git rm -r --cached .venv
+```
 
 ## Original tutorial
 
